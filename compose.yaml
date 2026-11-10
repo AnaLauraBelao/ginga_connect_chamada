@@ -1,6 +1,5 @@
 services:
   capoeira-chamada:
-    user: "0:0"
     build:
       context: .
       args:
@@ -11,15 +10,15 @@ services:
     restart: unless-stopped
     init: true
     ports:
-      - "${CAPOEIRA_PORT:-5000}:5000"
+      - "5000:5000"
     environment:
       TZ: America/Sao_Paulo
       CAPOEIRA_HOST: 0.0.0.0
       CAPOEIRA_PORT: "5000"
-      CAPOEIRA_DB_PATH: /app/instance/capoeira.sqlite3
+      CAPOEIRA_DB_PATH: /var/www/app/instance/capoeira.sqlite3
       CAPOEIRA_COOKIE_SECURE: ${CAPOEIRA_COOKIE_SECURE:-0}
     volumes:
-      - ./data:/app/instance
+      - ./data:/var/www/app/instance
     user: "${PUID:-1000}:${PGID:-1000}"
     healthcheck:
       test:
