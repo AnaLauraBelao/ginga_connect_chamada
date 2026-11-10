@@ -1,5 +1,6 @@
 services:
   capoeira-chamada:
+    user: "0:0"
     build:
       context: .
       args:
