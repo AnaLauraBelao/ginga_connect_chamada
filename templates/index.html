@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Acessar · Capoeira Chamada{% endblock %}
+{% block content %}
+<section class="login-layout">
+  <div class="hero-copy">
+    <span class="eyebrow">GESTÃO DE TURMAS E PRESENÇAS</span>
+    <h1>Entre na roda.<br><span>Registre a chamada.</span></h1>
+    <p>Escaneie o QR Code do seu crachá de professor para visualizar as turmas autorizadas e fazer a chamada.</p>
+    <div class="feature-pills"><span>✓ Turmas regulares</span><span>✓ Aulas extras</span><span>✓ Histórico de presença</span></div>
+  </div>
+  <section class="panel scanner-panel">
+    <div class="panel-icon">⌗</div>
+    <h2>Acessar com crachá</h2>
+    <p class="muted">Permita o acesso à câmera e aponte para o QR Code do crachá do professor.</p>
+    <div id="reader" class="reader hidden"></div>
+    <button type="button" class="button button-primary button-block" id="start-scanner"> <span>▣</span> Escanear crachá</button>
+    <p id="scan-status" class="small muted" role="status">A câmera será utilizada somente para ler o QR Code.</p>
+    <div class="divider-text"><span>ou</span></div>
+    <details class="manual-entry">
+      <summary>Inserir código manualmente</summary>
+      <form id="manual-scan-form" class="stack compact-stack">
+        <label for="qr-value">Conteúdo do QR Code</label>
+        <textarea id="qr-value" rows="2" placeholder="CAPOEIRA-PROF|identificador|credencial"></textarea>
+        <button class="button button-secondary" type="submit">Validar crachá</button>
+      </form>
+    </details>
+  </section>
+</section>
+<script>
+window.CAPOEIRA = { csrf: {{ csrf_token()|tojson }}, scanUrl: {{ url_for('api_scan')|tojson }} };
+</script>
+{% endblock %}

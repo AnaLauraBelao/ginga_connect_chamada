@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Turmas · Capoeira Chamada{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow">CADASTROS</span><h1>Turmas</h1><p class="muted">Turmas regulares e aulas extras vinculadas.</p></div><a class="button button-primary" href="{{ url_for('class_new') }}">+ Nova turma</a></div>
+<div class="table-wrap"><table><thead><tr><th>Turma</th><th>Tipo</th><th>Dias</th><th>Vínculos</th><th>Acesso</th><th></th></tr></thead><tbody>
+{% for row in classes %}<tr><td><strong>{{ row.class['name'] }}</strong></td><td><span class="type-tag {{ 'tag-extra' if row.class['is_extra'] else 'tag-regular' }}">{{ 'Extra' if row.class['is_extra'] else 'Regular' }}</span></td><td>{{ row.days|join(', ') }}</td><td>{{ row.linked|join(', ') if row.linked else '—' }}</td><td>{% if row.can_validate %}<span class="status-ok">Pode validar</span>{% else %}<span class="muted small">Sem acesso à chamada</span>{% endif %}</td><td><div class="row-actions"><a class="text-link" href="{{ url_for('class_detail', class_id=row.class['id']) }}">Abrir</a>{% if row.can_validate %}<a class="text-link" href="{{ url_for('class_report', class_id=row.class['id']) }}">Relatório</a>{% endif %}</div></td></tr>{% endfor %}
+</tbody></table></div>
+{% if not classes %}<div class="empty-state"><h3>Nenhuma turma cadastrada.</h3><a class="button button-primary" href="{{ url_for('class_new') }}">Criar turma</a></div>{% endif %}
+{% endblock %}

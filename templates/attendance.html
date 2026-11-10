@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Chamada · {{ class_row['name'] }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('class_detail', class_id=class_row['id']) }}" class="back-link">← Voltar para turma</a>
+<div class="page-heading"><div><span class="type-tag {{ 'tag-extra' if class_row['is_extra'] else 'tag-regular' }}">{{ 'AULA EXTRA' if class_row['is_extra'] else 'TURMA REGULAR' }}</span><h1>Chamada · {{ class_row['name'] }}</h1><p class="muted">{{ weekdays|join(' · ') }}</p></div><a class="button button-secondary" href="{{ url_for('class_report', class_id=class_row['id']) }}">Ver relatório</a></div>
+{% if class_row['is_extra'] %}<div class="info-banner"><strong>Compensação semanal ativa</strong><p>A presença marcada nesta aula extra será registrada aqui e também nas aulas programadas das turmas regulares vinculadas, dentro da mesma semana.</p></div>{% endif %}
+<section class="panel attendance-panel">
+  <form method="post" id="attendance-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="attendance-meta"><div><h2>Lista de presença</h2><p class="muted small" id="roster-count-meta">{{ roster|length }} aluno(s) na lista</p></div><div class="date-control"><label for="class_date">Data da aula</label><input type="date" id="class_date" name="class_date" value="{{ selected_date }}" required></div></div>
+    {% if not selected_date_is_scheduled %}<p class="help-text">A data selecionada não é um dos dias semanais cadastrados. Confirme que deseja registrar a chamada nesta data.</p>{% else %}<p class="help-text">A data selecionada corresponde a um dia de aula desta turma. Você pode alterá-la para lançar outra aula.</p>{% endif %}
+    {% if existing_session %}<div class="subtle-banner">Já existe uma chamada para esta data. Salvar novamente substituirá a lista de presentes.</div>{% endif %}
+
+    <section class="attendance-scan-panel" aria-labelledby="student-scan-heading">
+      <div class="scan-panel-heading">
+        <div><h3 id="student-scan-heading">Registrar presença pelo crachá</h3><p class="muted small">Escaneie o QR Code do aluno para selecioná-lo automaticamente na lista abaixo.</p></div>
+        <button class="button button-primary" type="button" id="student-scan-start">Escanear crachá</button>
+      </div>
+      <div id="student-reader" class="reader hidden" aria-live="polite"></div>
+      <p id="student-scan-status" class="scan-status" role="status" aria-live="polite">A câmera ficará ativa para ler vários crachás em sequência.</p>
+      <div class="manual-scan-row">
+        <label for="student-qr-value">Ou informe o código do QR manualmente</label>
+        <div class="manual-scan-controls"><input id="student-qr-value" type="text" placeholder="CAPOEIRA-ALUNO|identificador" autocomplete="off"><button class="button button-secondary" type="button" id="student-manual-scan">Validar QR</button></div>
+      </div>
+    </section>
+
+    <div class="attendance-tools attendance-tools-heading">
+      <div><strong>Alunos da chamada</strong><p class="muted small" id="roster-count">{{ roster|length }} aluno(s) disponível(is)</p></div>
+      <button class="button button-secondary button-small" type="button" id="open-quick-student">＋ Cadastro rápido</button>
+    </div>
+    <div class="attendance-tools attendance-selection-tools"><label class="check-option"><input type="checkbox" id="select-all"><span>Selecionar todos</span></label><span class="muted small" id="selected-count">{{ checked|length }} selecionado(s)</span></div>
+    <div class="attendance-roster" id="attendance-roster">
+      {% for student in roster %}<label class="attendance-person" data-student-id="{{ student['id'] }}"><input type="checkbox" name="student_ids" value="{{ student['id'] }}" {% if student['id'] in checked %}checked{% endif %}><span class="avatar">{{ (student['nickname'] or student['name'])[0]|upper }}</span><span class="person-main"><strong>{{ student['nickname'] or student['name'] }}</strong><small>{{ student['name'] }} · {{ student['belt'] or 'Corda não informada' }}</small></span><span class="attendance-check">✓</span></label>{% endfor %}
+    </div>
+    {% if not roster %}<div class="empty-state" id="attendance-empty"><h3>Nenhum aluno disponível para esta chamada.</h3><p>Escaneie um crachá após matricular o aluno ou use o cadastro rápido para criar e adicionar alguém à turma.</p></div>{% endif %}
+    <div class="submit-bar"><span class="muted small">Apenas os alunos selecionados serão marcados como presentes.</span><button class="button button-primary" type="submit">Salvar chamada</button></div>
+  </form>
+</section>
+
+<div class="modal-backdrop hidden" id="quick-student-modal" role="dialog" aria-modal="true" aria-labelledby="quick-student-title">
+  <div class="quick-student-modal panel">
+    <div class="modal-heading"><div><span class="eyebrow">CADASTRO NA CHAMADA</span><h2 id="quick-student-title">Novo aluno</h2><p class="muted small">O aluno será cadastrado e adicionado automaticamente à turma desta chamada.</p></div><button type="button" class="modal-close" id="close-quick-student" aria-label="Fechar">×</button></div>
+    <div class="quick-student-fields">
+      <label>Nome completo <input id="quick-student-name" maxlength="120" required autocomplete="name" placeholder="Nome do aluno"></label>
+      <label>Apelido <input id="quick-student-nickname" maxlength="80" placeholder="Como é conhecido na roda"></label>
+      <label>Corda atual <input id="quick-student-belt" maxlength="80" placeholder="Ex.: Amarela e laranja"></label>
+    </div>
+    {% if class_row['is_extra'] and linked_regular_classes %}
+    <div class="quick-enroll-options"><strong>Matricular também nas turmas regulares</strong><p class="muted small">Opcional. Isso permite que a presença nesta aula extra compense as aulas semanais dessas turmas.</p>
+      {% for regular in linked_regular_classes %}<label class="check-option"><input type="checkbox" name="quick-regular-class" value="{{ regular['id'] }}"><span>{{ regular['name'] }}</span></label>{% endfor %}
+    </div>
+    {% endif %}
+    <p id="quick-student-status" class="scan-status" role="status" aria-live="polite"></p>
+    <div class="modal-actions"><button type="button" class="button button-secondary" id="cancel-quick-student">Cancelar</button><button type="button" class="button button-primary" id="save-quick-student">Cadastrar e adicionar</button></div>
+  </div>
+</div>
+<script>
+window.CAPOEIRA_ATTENDANCE = {
+  csrf: {{ csrf_token()|tojson }},
+  scanUrl: {{ url_for('api_scan_student', class_id=class_row['id'])|tojson }},
+  quickStudentUrl: {{ url_for('api_quick_student', class_id=class_row['id'])|tojson }},
+};
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Relatório combinado · Capoeira Chamada{% endblock %}
+{% block content %}
+<a href="{{ url_for('reports_list') }}" class="back-link">← Voltar para chamadas</a>
+<div class="page-heading">
+  <div><span class="eyebrow">RELATÓRIO COMBINADO</span><h1>Frequência de várias turmas</h1><p class="muted">Período: {{ start|date_br }} a {{ end|date_br }}</p></div>
+  <button type="button" class="button button-primary" id="copy-report-button">Copiar relatório</button>
+</div>
+<section class="panel">
+  <h2>Turmas selecionadas</h2>
+  <div class="chips-row">{% for item in classes %}<span class="type-tag {{ 'tag-extra' if item['is_extra'] else 'tag-regular' }}">{{ 'Extra' if item['is_extra'] else 'Regular' }} · {{ item['name'] }}</span>{% endfor %}</div>
+  <div class="stats-grid report-stats-grid top-gap">
+    <article class="stat-card"><span>Aulas regulares (somatório das turmas)</span><strong>{{ total_regular_lessons }}</strong></article>
+    <article class="stat-card"><span>Aulas extras selecionadas</span><strong>{{ total_extra_lessons }}</strong><small class="muted">Não entram no denominador dos alunos regulares.</small></article>
+    <article class="stat-card"><span>Alunos no relatório</span><strong>{{ student_count }}</strong></article>
+  </div>
+</section>
+{% if regular_summaries %}
+<section class="panel report-summary-panel">
+  <div class="section-heading"><div><h2>Alunos das turmas regulares</h2><p class="muted small">Cada aluno considera somente as aulas das turmas regulares em que está matriculado. Presenças das aulas extras selecionadas compensam as datas regulares correspondentes, quando há vínculo.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Aluno</th><th>Presenças</th><th>Total individual</th><th>Frequência</th></tr></thead><tbody>
+    {% for item in regular_summaries %}<tr><td><strong>{{ item['display_name'] }}</strong></td><td>{{ item['present'] }}</td><td>{{ item['total'] if item['total'] else 'N/D' }}</td><td><strong>{{ '%.1f'|format(item['percent'])|replace('.', ',') }}%</strong></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+{% if extra_only_summaries %}
+<section class="panel report-summary-panel">
+  <div class="section-heading"><div><h2>Alunos sem vínculo com as turmas regulares atendidas pelas aulas extras</h2><p class="muted small">São alunos matriculados diretamente na aula extra, mas não em nenhuma das turmas regulares que ela atende. Para eles, somente as chamadas extras entram no cálculo da frequência.</p></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Aluno</th><th>Presenças</th><th>Total de aulas extras</th><th>Frequência</th></tr></thead><tbody>
+    {% for item in extra_only_summaries %}<tr><td><strong>{{ item['display_name'] }}</strong></td><td>{{ item['present'] }}</td><td>{{ item['total'] if item['total'] else 'N/D' }}</td><td><strong>{{ '%.1f'|format(item['percent'])|replace('.', ',') }}%</strong></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+<section class="panel report-export-panel">
+  <div class="section-heading"><div><h2>Texto para exportação</h2><p class="muted small">Copie e compartilhe o relatório combinado.</p></div><button type="button" class="button button-primary" id="copy-report-button-secondary">Copiar texto</button></div>
+  <textarea id="report-text" class="report-textarea" readonly rows="{{ [student_count + 12, 16]|min }}">{{ report_text }}</textarea>
+  <p class="copy-feedback muted small" id="copy-report-status" aria-live="polite">Você também pode selecionar e copiar o texto manualmente.</p>
+</section>
+{% endblock %}

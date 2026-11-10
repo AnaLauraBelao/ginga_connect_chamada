@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>{% block title %}Capoeira Chamada{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('dashboard') if current_teacher else url_for('index') }}">
+      <span class="brand-mark">CC</span><span>Capoeira <strong>Chamada</strong></span>
+    </a>
+    {% if current_teacher %}
+    <div class="top-user">
+      <span class="user-label">{{ current_teacher['nickname'] or current_teacher['name'] }}{% if current_teacher['is_admin'] %} · Admin{% endif %}</span>
+      <form method="post" action="{{ url_for('logout') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-ghost button-small" type="submit">Sair</button>
+      </form>
+    </div>
+    {% endif %}
+  </header>
+  {% if current_teacher %}
+  <nav class="main-nav" aria-label="Navegação principal">
+    <a href="{{ url_for('dashboard') }}">Painel</a>
+    <a href="{{ url_for('classes_list') }}">Turmas</a>
+    <a href="{{ url_for('reports_list') }}">Chamadas</a>
+    <a href="{{ url_for('students_list') }}">Alunos</a>
+    {% if is_admin_user %}<a href="{{ url_for('teachers_list') }}">Professores</a><a href="{{ url_for('export_data') }}">Exportar dados</a>{% endif %}
+  </nav>
+  {% endif %}
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">Capoeira Chamada · Presenças organizadas, roda fortalecida.</footer>
+</body>
+</html>

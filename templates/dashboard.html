@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Painel · Capoeira Chamada{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><span class="eyebrow">PAINEL</span><h1>Olá, {{ current_teacher['nickname'] or current_teacher['name'].split(' ')[0] }}!</h1><p class="muted">Escolha uma turma para registrar a chamada.</p></div>
+  <div class="heading-actions">
+    <a class="button button-secondary" href="{{ url_for('classes_list') }}">Ver turmas</a>
+    <a class="button button-primary" href="{{ url_for('class_new') }}">+ Nova turma</a>
+  </div>
+</div>
+<div class="stats-grid">
+  <div class="stat-card"><span>Turmas disponíveis</span><strong>{{ class_data|length }}</strong></div>
+  <div class="stat-card"><span>Alunos cadastrados</span><strong>{{ student_count }}</strong></div>
+  {% if is_admin_user %}<div class="stat-card"><span>Professores ativos</span><strong>{{ teacher_count }}</strong></div>{% endif %}
+</div>
+<div class="section-heading"><h2>Turmas para chamada</h2><span class="muted small">{% if is_admin_user %}Todas as turmas ativas{% else %}Turmas autorizadas para você{% endif %}</span></div>
+{% if class_data %}
+<div class="cards-grid">
+  {% for item in class_data %}
+  <article class="class-card">
+    <div class="card-topline"><span class="type-tag {{ 'tag-extra' if item.class['is_extra'] else 'tag-regular' }}">{{ 'AULA EXTRA' if item.class['is_extra'] else 'REGULAR' }}</span><span class="muted small">{{ item.count }} aluno(s)</span></div>
+    <h3>{{ item.class['name'] }}</h3>
+    <p class="muted">{{ item.days|join(' · ') }}</p>
+    {% if item.class['is_extra'] %}<p class="small muted">Vinculada a {{ item.linked_count }} turma(s) regular(es)</p>{% endif %}
+    <div class="card-actions">
+      <a class="button button-primary button-block" href="{{ url_for('attendance', class_id=item.class['id']) }}">Fazer chamada</a>
+      <a class="text-link" href="{{ url_for('class_detail', class_id=item.class['id']) }}">Detalhes da turma →</a>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-icon">◎</div><h3>Nenhuma turma disponível</h3><p>Crie uma turma ou peça ao administrador para liberar seu acesso.</p><a href="{{ url_for('class_new') }}" class="button button-primary">Criar primeira turma</a></div>
+{% endif %}
+{% if is_admin_user %}
+<div class="admin-strip"><div><strong>Administração</strong><p class="muted small">Gerencie os cadastros e mantenha uma cópia dos dados.</p></div><div class="inline-actions"><a href="{{ url_for('teachers_list') }}" class="button button-secondary">Professores</a><a href="{{ url_for('export_data') }}" class="button button-secondary">↓ Exportar tudo</a></div></div>
+{% endif %}
+{% endblock %}

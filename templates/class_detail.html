@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}{{ class_row['name'] }} · Capoeira Chamada{% endblock %}
+{% block content %}
+<a href="{{ url_for('classes_list') }}" class="back-link">← Voltar para turmas</a>
+<div class="page-heading">
+  <div>
+    <span class="type-tag {{ 'tag-extra' if class_row['is_extra'] else 'tag-regular' }}">{{ 'AULA EXTRA' if class_row['is_extra'] else 'TURMA REGULAR' }}</span>
+    <h1>{{ class_row['name'] }}</h1>
+    <p class="muted">{{ days|join(' · ') }}</p>
+  </div>
+  <div class="heading-actions">
+    {% if can_validate %}
+      <a href="{{ url_for('attendance', class_id=class_row['id']) }}" class="button button-primary">Fazer chamada</a>
+      <a href="{{ url_for('class_report', class_id=class_row['id']) }}" class="button button-secondary">Relatório</a>
+    {% endif %}
+  </div>
+</div>
+<div class="detail-grid">
+  <section class="panel">
+    <div class="panel-heading"><div><h2>Alunos da turma</h2><p class="muted small">{{ enrolled|length }} aluno(s) matriculado(s) ou atendido(s) por vínculo</p></div></div>
+    <form class="add-row" method="post" action="{{ url_for('class_enroll', class_id=class_row['id']) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <select name="student_id" required><option value="">Adicionar qualquer aluno…</option>{% for student in available_students %}<option value="{{ student['id'] }}">{{ student['name'] }}{% if student['nickname'] %} ({{ student['nickname'] }}){% endif %}</option>{% endfor %}</select>
+      <button class="button button-primary" type="submit">Adicionar</button>
+    </form>
+    {% if enrolled %}
+      <div class="people-list">
+      {% for student in enrolled %}
+        <div class="person-row">
+          <div class="avatar">{{ (student['nickname'] or student['name'])[0]|upper }}</div>
+          <div class="person-main"><strong>{{ student['nickname'] or student['name'] }}</strong><small>{{ student['name'] }} · {{ student['belt'] or 'Corda não informada' }}</small></div>
+          <div class="row-actions">
+            <a class="text-link" href="{{ url_for('student_detail', student_id=student['id']) }}">Ver</a>
+            {% if student['id'] in direct_ids %}
+              <form method="post" action="{{ url_for('class_unenroll', class_id=class_row['id'], student_id=student['id']) }}" onsubmit="return confirm('Remover aluno desta turma? O histórico será preservado.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button" title="Remover da turma" aria-label="Remover">×</button></form>
+            {% elif class_row['is_extra'] %}<span class="muted small">Pela turma regular</span>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}<p class="empty-inline">Nenhum aluno matriculado nesta turma.</p>{% endif %}
+  </section>
+  <div class="stack">
+    <section class="panel">
+      <h2>{{ 'Turmas regulares atendidas por esta aula extra' if class_row['is_extra'] else 'Aulas extras vinculadas a esta turma' }}</h2>
+      {% if linked %}<div class="link-list">{% for item in linked %}<a href="{{ url_for('class_detail', class_id=item['id']) }}"><span>{{ item['name'] }}</span><span>→</span></a>{% endfor %}</div>
+      {% else %}<p class="muted small">Nenhum vínculo cadastrado.</p>{% endif %}
+      {% if can_manage %}
+        <form method="post" action="{{ url_for('class_update_links', class_id=class_row['id']) }}" class="stack top-border">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <p class="small muted">
+            {% if class_row['is_extra'] %}Selecione as turmas regulares que esta aula extra atende. Somente alunos matriculados em cada turma regular receberão a compensação.{% else %}Selecione as aulas extras que podem compensar presença nesta turma.{% endif %}
+          </p>
+          {% if link_options %}
+            <div class="check-list">
+              {% for option in link_options %}
+                <label><input type="checkbox" name="linked_class_ids" value="{{ option['id'] }}" {% if option['id'] in selected_link_ids %}checked{% endif %}><span>{{ option['name'] }}</span></label>
+              {% endfor %}
+            </div>
+            <button class="button button-secondary button-block" type="submit">Salvar vínculos</button>
+          {% else %}
+            <p class="muted small">{% if class_row['is_extra'] %}Cadastre uma turma regular para vinculá-la aqui.{% else %}Cadastre uma aula extra para vinculá-la aqui.{% endif %}</p>
+          {% endif %}
+        </form>
+      {% endif %}
+    </section>
+    <section class="panel">
+      <h2>Professores autorizados</h2>
+      {% if teachers %}<div class="people-list compact-list">{% for person in teachers %}<div class="person-row"><div class="avatar avatar-small">{{ (person['nickname'] or person['name'])[0]|upper }}</div><div class="person-main"><strong>{{ person['nickname'] or person['name'] }}</strong><small>{{ 'Administrador' if person['is_admin'] else 'Professor' }}</small></div></div>{% endfor %}</div>{% endif %}
+      {% if is_admin_user %}
+        <form method="post" action="{{ url_for('class_assign_teachers', class_id=class_row['id']) }}" class="stack top-border">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><p class="small muted">Selecione quem poderá validar a presença desta turma.</p>
+          <div class="check-list">{% for person in all_teachers %}<label><input type="checkbox" name="teacher_ids" value="{{ person['id'] }}" {% if person['id'] in teachers|map(attribute='id')|list %}checked{% endif %}><span>{{ person['name'] }}{% if person['is_admin'] %} · Admin{% endif %}</span></label>{% endfor %}</div>
+          <button class="button button-secondary button-block" type="submit">Salvar permissões</button>
+        </form>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

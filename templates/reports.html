@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Chamadas · Capoeira Chamada{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><span class="eyebrow">CONSULTA E RELATÓRIOS</span><h1>Chamadas</h1><p class="muted">Consulte uma turma ou combine várias turmas em um único relatório.</p></div>
+  <a href="{{ url_for('classes_list') }}" class="button button-secondary">Ver turmas</a>
+</div>
+{% if classes %}
+  <section class="panel combined-report-selector">
+    <div class="section-heading"><div><h2>Relatório de várias turmas</h2><p class="muted small">Selecione turmas regulares e aulas extras. A compensação será aplicada somente aos alunos matriculados nas turmas regulares selecionadas.</p></div></div>
+    <form method="get" action="{{ url_for('combined_report') }}" class="stack">
+      <div class="check-list combined-class-list">
+        {% for item in classes %}
+          <label>
+            <input type="checkbox" name="class_ids" value="{{ item['id'] }}">
+            <span><span class="type-tag {{ 'tag-extra' if item['is_extra'] else 'tag-regular' }}">{{ 'Aula extra' if item['is_extra'] else 'Regular' }}</span> {{ item['name'] }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <div class="filter-row report-custom-filter">
+        <label>Período
+          <select id="combined-period-select" name="period"><option value="monthly">Mensal</option><option value="annual">Anual</option><option value="custom">Personalizado</option></select>
+        </label>
+        <label>Data de início<input type="date" name="start" data-combined-date></label>
+        <label>Data de fim<input type="date" name="end" data-combined-date></label>
+      </div>
+      <button class="button button-primary" type="submit">Gerar relatório combinado</button>
+    </form>
+  </section>
+  <div class="section-heading"><div><h2>Relatório individual</h2><p class="muted small">Abra uma turma para visualizar seu histórico de frequência.</p></div></div>
+  <div class="cards-grid report-class-grid">
+    {% for item in classes %}
+    <article class="class-card">
+      <div class="card-topline"><span class="type-tag {{ 'tag-extra' if item['is_extra'] else 'tag-regular' }}">{{ 'AULA EXTRA' if item['is_extra'] else 'TURMA REGULAR' }}</span></div>
+      <h3>{{ item['name'] }}</h3>
+      <p class="muted">Consulte presenças e exporte o relatório desta turma.</p>
+      <div class="card-actions"><a class="button button-primary" href="{{ url_for('class_report', class_id=item['id']) }}">Visualizar chamadas</a></div>
+    </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state"><h3>Nenhuma turma disponível.</h3><p>Quando uma turma for criada e atribuída a você, ela aparecerá aqui.</p><a href="{{ url_for('classes_list') }}" class="button button-primary">Ir para turmas</a></div>
+{% endif %}
+{% endblock %}

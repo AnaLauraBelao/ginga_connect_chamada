@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Nova turma · Capoeira Chamada{% endblock %}
+{% block content %}
+<section class="narrow-content wide-narrow">
+  <a href="{{ url_for('classes_list') }}" class="back-link">← Voltar para turmas</a>
+  <span class="eyebrow">CADASTRO</span><h1>Nova turma</h1>
+  <form method="post" class="panel form-panel stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Nome da turma <input name="name" required maxlength="120" placeholder="Ex.: Infantil — terça e quinta"></label>
+    <fieldset><legend>Tipo de turma</legend><div class="radio-cards"><label class="radio-card"><input type="radio" name="class_type" value="regular" checked data-class-type><span><strong>Turma regular</strong><small>Turma com aulas semanais.</small></span></label><label class="radio-card"><input type="radio" name="class_type" value="extra" data-class-type><span><strong>Aula extra</strong><small>Compensa presenças nas turmas regulares vinculadas.</small></span></label></div></fieldset>
+    <fieldset><legend>Dias de aula</legend><div class="weekday-grid">{% for day, full, short in weekdays %}<label class="weekday-option"><input type="checkbox" name="weekdays" value="{{ day }}" {% if day in selected_days %}checked{% endif %}><span>{{ short }}</span></label>{% endfor %}</div><p class="help-text">Selecione os dias em que esta turma costuma acontecer.</p></fieldset>
+    <div id="extra-links" class="stack {% if not selected_links %}hidden{% endif %}"><fieldset><legend>Turmas regulares compensadas por esta aula extra</legend><p class="help-text">A presença na aula extra irá gerar presença nas aulas programadas das turmas selecionadas na mesma semana. Você também pode criar a turma sem vínculos e configurá-los depois na tela dela.</p>{% if regulars %}<div class="check-list">{% for regular in regulars %}<label><input type="checkbox" name="regular_classes" value="{{ regular['id'] }}" {% if regular['id'] in selected_links %}checked{% endif %}><span>{{ regular['name'] }}</span></label>{% endfor %}</div>{% else %}<p class="muted small">Nenhuma turma regular cadastrada. Você poderá criar o vínculo depois.</p>{% endif %}</fieldset></div>
+    <button class="button button-primary" type="submit">Salvar turma</button>
+  </form>
+</section>
+{% endblock %}

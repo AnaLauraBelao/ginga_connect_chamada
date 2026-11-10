@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}{{ student['name'] }} · Capoeira Chamada{% endblock %}
+{% block content %}
+<a href="{{ url_for('students_list') }}" class="back-link">← Voltar para alunos</a>
+<div class="page-heading"><div><span class="eyebrow">ALUNO</span><h1>{{ student['name'] }}</h1><p class="muted">{{ student['nickname'] or 'Sem apelido' }} · {{ student['belt'] or 'Corda não informada' }}</p></div><div class="heading-actions"><a href="{{ url_for('student_edit', student_id=student['id']) }}" class="button button-secondary">Editar</a><a href="{{ url_for('student_badge', student_id=student['id']) }}" class="button button-primary">↓ Exportar crachá PDF</a></div></div>
+<div class="detail-grid"><section class="panel"><h2>Turmas matriculadas</h2>{% if classes %}<div class="link-list">{% for c in classes %}<a href="{{ url_for('class_detail', class_id=c['id']) }}"><span>{{ c['name'] }} {% if c['is_extra'] %}<small class="type-tag tag-extra">Extra</small>{% endif %}</span><span>→</span></a>{% endfor %}</div>{% else %}<p class="muted">Este aluno ainda não está matriculado em nenhuma turma.</p>{% endif %}</section>
+<section class="panel"><h2>Últimas presenças</h2>{% if attendance %}<div class="people-list">{% for item in attendance %}<div class="history-row"><div><strong>{{ item['target_date']|date_br }}</strong><small>{{ item['target_name'] }}</small></div><span class="presence-tag {{ 'presence-extra' if item['kind'] != 'regular' else 'presence-regular' }}">{{ 'Aula extra' if item['kind']=='extra_actual' else 'Compensada' if item['kind']=='extra_credit' else 'Regular' }}</span></div>{% endfor %}</div>{% else %}<p class="muted">Ainda não há presenças registradas.</p>{% endif %}</section></div>
+{% endblock %}

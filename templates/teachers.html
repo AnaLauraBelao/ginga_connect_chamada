@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Professores · Capoeira Chamada{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow">ADMINISTRAÇÃO</span><h1>Professores</h1><p class="muted">Gerencie os crachás e as permissões de acesso.</p></div><a href="{{ url_for('teacher_new') }}" class="button button-primary">+ Novo professor</a></div>
+<div class="table-wrap"><table><thead><tr><th>Professor</th><th>Apelido</th><th>Corda</th><th>Perfil</th><th>Status</th><th></th></tr></thead><tbody>{% for teacher in teachers %}<tr><td><strong>{{ teacher['name'] }}</strong></td><td>{{ teacher['nickname'] or '—' }}</td><td>{{ teacher['belt'] or '—' }}</td><td>{{ 'Administrador' if teacher['is_admin'] else 'Professor' }}</td><td>{{ 'Ativo' if teacher['active'] else 'Inativo' }}</td><td><div class="inline-actions"><a class="text-link" href="{{ url_for('teacher_edit', teacher_id=teacher['id']) }}">Editar</a>{% if teacher['active'] %}<a class="text-link" href="{{ url_for('teacher_badge', teacher_id=teacher['id']) }}">Crachá PDF</a>{% endif %}</div></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

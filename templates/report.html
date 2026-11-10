@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Chamadas · {{ class_row['name'] }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('reports_list') }}" class="back-link">← Voltar para chamadas</a>
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">CONSULTA DE FREQUÊNCIA</span>
+    <h1>{{ class_row['name'] }}</h1>
+    <p class="muted">Período: {{ start|date_br }} a {{ end|date_br }}</p>
+  </div>
+  <div class="heading-actions">
+    <a href="{{ url_for('attendance', class_id=class_row['id']) }}" class="button button-primary">Fazer chamada</a>
+    <button type="button" class="button button-secondary" id="copy-report-button">Copiar relatório</button>
+  </div>
+</div>
+
+<section class="panel report-filter-panel">
+  <div class="section-heading"><div><h2>Período do relatório</h2><p class="muted small">Use um atalho ou escolha as datas desejadas.</p></div></div>
+  <div class="report-presets" aria-label="Atalhos de período">
+    <a class="button {{ 'button-primary' if period == 'monthly' else 'button-secondary' }}" href="{{ url_for('class_report', class_id=class_row['id'], period='monthly') }}">Mensal</a>
+    <a class="button {{ 'button-primary' if period == 'annual' else 'button-secondary' }}" href="{{ url_for('class_report', class_id=class_row['id'], period='annual') }}">Anual</a>
+  </div>
+  <form class="filter-row report-custom-filter" method="get" action="{{ url_for('class_report', class_id=class_row['id']) }}">
+    <input type="hidden" name="period" value="custom">
+    <label>Data de início<input type="date" name="start" value="{{ start }}" required></label>
+    <label>Data de fim<input type="date" name="end" value="{{ end }}" required></label>
+    <button class="button button-secondary" type="submit">Aplicar período</button>
+  </form>
+</section>
+
+<div class="stats-grid report-stats-grid">
+  <article class="stat-card">
+    <span>{{ 'Aulas extras no período' if class_row['is_extra'] else 'Aulas regulares no período' }}</span>
+    <strong>{{ scheduled_total }}</strong>
+    <small class="muted">{{ saved_sessions }} chamada(s) registrada(s)</small>
+  </article>
+  <article class="stat-card"><span>Aulas extras vinculadas realizadas</span><strong>{{ extra_sessions }}</strong></article>
+  <article class="stat-card"><span>Alunos no relatório</span><strong>{{ student_summaries|length }}</strong></article>
+</div>
+
+<section class="panel report-summary-panel">
+  <div class="section-heading">
+    <div><h2>Frequência por aluno</h2><p class="muted small">Presenças efetivas no período, incluindo compensações por aulas extras.</p></div>
+  </div>
+  <div class="table-wrap report-table-wrap">
+    <table>
+      <thead><tr><th>Aluno</th><th>Presenças</th><th>Frequência</th><th>Origem das presenças</th></tr></thead>
+      <tbody>
+        {% for item in student_summaries %}
+        <tr>
+          <td><strong>{{ item['display_name'] }}</strong></td>
+          <td>{{ item['present'] }} / {{ item['total'] if item['total'] else 'N/D' }}</td>
+          <td><strong>{{ '%.1f'|format(item['percent'])|replace('.', ',') }}%</strong></td>
+          <td>
+            {% if class_row['is_extra'] %}
+              <span class="presence-tag presence-extra-actual">{{ item['extra_actual'] }} na aula extra</span>
+            {% else %}
+              <span class="presence-tag presence-regular">{{ item['regular'] }} regular(es)</span>
+              <span class="presence-tag presence-extra">{{ item['extra_credit'] }} compensada(s)</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if not student_summaries %}<div class="empty-inline">Nenhum aluno matriculado ou com presença neste período.</div>{% endif %}
+</section>
+
+<section class="panel report-export-panel">
+  <div class="section-heading">
+    <div><h2>Texto para exportação</h2><p class="muted small">O botão copia o relatório formatado para a área de transferência.</p></div>
+    <button type="button" class="button button-primary" id="copy-report-button-secondary">Copiar texto</button>
+  </div>
+  <textarea id="report-text" class="report-textarea" readonly rows="{{ [student_summaries|length + 6, 12]|min }}">{{ report_text }}</textarea>
+  <p class="copy-feedback muted small" id="copy-report-status" aria-live="polite">Você também pode selecionar e copiar o texto manualmente.</p>
+</section>
+
+<section class="report-history-section">
+  <div class="section-heading"><div><h2>Histórico detalhado</h2><p class="muted small">Cada presença com sua data e origem de registro.</p></div></div>
+  <div class="legend-row"><span class="presence-tag presence-regular">Regular</span><span class="presence-tag presence-extra">Compensada por aula extra</span><span class="presence-tag presence-extra-actual">Presente na aula extra</span></div>
+  <div class="table-wrap">
+    <table><thead><tr><th>Data considerada</th><th>Aluno</th><th>Tipo de presença</th><th>Origem</th><th>Data de origem</th><th>Registrado por</th></tr></thead>
+      <tbody>
+      {% for item in records %}
+        <tr>
+          <td><strong>{{ item['target_date']|date_br }}</strong></td>
+          <td>{{ item['student_nickname'] or item['student_name'] }}</td>
+          <td>{% if item['kind']=='regular' %}<span class="presence-tag presence-regular">Regular</span>{% elif item['kind']=='extra_credit' %}<span class="presence-tag presence-extra">Compensada</span>{% else %}<span class="presence-tag presence-extra-actual">Aula extra</span>{% endif %}</td>
+          <td>{{ item['source_name'] }}</td><td>{{ item['source_date']|date_br }}</td><td>{{ item['teacher_name'] }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if not records %}<div class="empty-state"><h3>Nenhuma presença encontrada.</h3><p>As presenças aparecerão aqui depois que uma chamada for salva.</p></div>{% endif %}
+</section>
+{% endblock %}
