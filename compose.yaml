@@ -18,7 +18,7 @@ services:
       CAPOEIRA_DB_PATH: /var/www/app/instance/capoeira.sqlite3
       CAPOEIRA_COOKIE_SECURE: ${CAPOEIRA_COOKIE_SECURE:-0}
     volumes:
-      - ./data:/var/www/app/instance
+      - ./:/var/www/app
     user: "${PUID:-1000}:${PGID:-1000}"
     healthcheck:
       test:
